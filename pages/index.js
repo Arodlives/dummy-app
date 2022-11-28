@@ -20,8 +20,8 @@ const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
 
 const user = {
   id: 'someid',
-  name: 'John Doe',
-  image: 'http://someimage.com',
+  name: 'John Doe 2',
+  image: 'http://someimage2.com',
 }
 
 export default function Home() {
@@ -31,10 +31,20 @@ export default function Home() {
   useEffect(() => {
     async function init() {
       const chatClient = StreamChat.getInstance(apiKey)
+      
+      console.log('user in useeffect', user)
+
+      // api call to get token
+      const response = await fetch('http://localhost:3000/api/token',{
+        method:'POST',
+        body:JSON.stringify(user)
+      })
+
+      const { token } = await response.json()
 
       await chatClient.connectUser(
         user,
-        chatClient.devToken(user.id) // token
+        token // token
       )
 
       const channel = chatClient.channel('messaging','react-talk',{name:'something',members:[user.id]})
