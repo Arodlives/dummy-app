@@ -1,77 +1,91 @@
+import React,{useEffect,useState} from 'react'
+import ChatClient from '../components/ChatClient'
 import Head from 'next/head'
+import Link from 'next/link'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
-import React,{useEffect,useState} from 'react'
-import {StreamChat} from 'stream-chat'
-import{ 
-  Chat,
-  Channel,
-  Window,
-  ChannelHeader,
-  MessageList,
-  Thread,
-  LoadingIndicator,
-  MessageInput
-} from 'stream-chat-react'
-
-import 'stream-chat-react/dist/css/index.css'
-
-const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
-
-const user = {
-  id: 'someid',
-  name: 'John Doe 2',
-  image: 'http://someimage2.com',
-}
+import { getSession,useSession,signOut } from "next-auth/react"
 
 export default function Home() {
-  const[client,setClient]=useState(null)
-  const[channel,setChannel]=useState(null)
+  //   //?  ⬇️Connecting next auth to change this state variable⬇️
+  const{data:session}=useSession()
 
-  useEffect(() => {
-    async function init() {
-      const chatClient = StreamChat.getInstance(apiKey)
-      
-      console.log('user in useeffect', user)
 
-      // api call to get token
-      const response = await fetch('http://localhost:3000/api/token',{
-        method:'POST',
-        body:JSON.stringify(user)
-      })
-
-      const { token } = await response.json()
-
-      await chatClient.connectUser(
-        user,
-        token // token
-      )
-
-      const channel = chatClient.channel('messaging','react-talk',{name:'something',members:[user.id]})
-      
-      await channel.watch()
-
-      setChannel(channel)
-      setClient(chatClient)
-    
-    } 
-    init()
-
-    if(client ) return ()=> client.disconnectUser()
-    
-  },[])
-
-  if(!channel || !client) return <LoadingIndicator/>
-
+  function handleSignout(){
+    signOut()
+  }
+  
   return(
-    <Chat client={client} theme='messaging light'>
-      <Channel channel={channel}>
-        <Window>
-          <ChannelHeader/>
-          <MessageList/>
-          <MessageInput/>
-        </Window>
-      </Channel>
-    </Chat>
+    <div className={styles.container}>
+      <Head>
+        <title>Chatterbox</title>
+        <meta name="description" content="Social Chat App" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      {session? User({session,handleSignout}) : Guest()}
+    </div>
   )
+}
+
+function Guest(){
+  return (
+    <main className='container py-20 mx-auto text-center'>
+      <h3 className='text-4xl font-bold'>
+        Guest Homepage
+      </h3>
+      <div className='flex justify-center'>
+        <Link href={'/login'} alt="To Login page" className='px-10 py-1 mt-5 bg-indigo-500 rounded-sm text-gray '>Sign in</Link>
+      </div>
+    </main>
+  )
+ }
+//Authorize User 
+  function User({session,handleSignout}){
+  return(
+    <main className='container py-20 mx-auto text-center'>
+    <h3 className='text-4xl font-bold'>
+      Authorized Homepage
+    </h3>
+
+    <div className='details'>
+      <h5><img src={session.user.image} alt="" style={{borderRadius: '50px'}}/></h5>
+      <h5>{session.user.name}</h5>
+      <h5>{session.user.email}</h5>
+      <ChatClient/>
+    </div>
+
+    <div className='flex justify-center'>
+      <button className='px-10 py-1 mt-5 bg-indigo-500 rounded-sm bg-gray-50' onClick={handleSignout}>
+      {/* <LogOutIcon className="w-5 h-5 rotate-180"  /> */}
+        Sign Out
+      </button>
+    </div>
+
+    <div className='flex justify-center'>
+      <Link href={'/profile'} alt="To Login page" className='px-10 py-1 mt-5 bg-indigo-500 rounded-sm text-gray '>Profile</Link>
+    </div>
+  </main>
+  )
+}
+
+export async function getServerSideProps({req}){
+                  //? Returns a cookie🍪
+  const session = await getSession({req})
+
+  if(!session){
+    return{
+      redirect:{
+        destination:'/login',
+        permanent:false,
+      }
+    }
+  }
+  
+
+  return {
+    props:{
+      session
+    }
+  }
 }
