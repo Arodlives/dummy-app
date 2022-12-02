@@ -18,15 +18,10 @@ import 'stream-chat-react/dist/css/index.css'
 
 const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
 
-const user = {
-  id: 'someid',
-  name: 'John Doe 2',
-  image: 'http://someimage2.com',
-}
-
-export default function ChatClient() {
+export default function ChatClient({ session }) {
   const[client,setClient]=useState(null)
   const[channel,setChannel]=useState(null)
+  const [user,setUser] = useState(session.user)
 
   useEffect(() => {
     async function init() {
@@ -52,7 +47,8 @@ export default function ChatClient() {
       setChannel(channel)
       setClient(chatClient)
     
-    } 
+    }
+
     init()
 
     if(client ) return ()=> client.disconnectUser()

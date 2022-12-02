@@ -52,7 +52,7 @@ function User({ session, handleSignout }) {
         <h5><img src={session.user.image} alt="" style={{ borderRadius: '50px' }} /></h5>
         <h5>{session.user.name}</h5>
         <h5>{session.user.email}</h5>
-        <ChatClient />
+        <ChatClient session={session}/>
       </div>
 
       <div className='flex justify-center'>
